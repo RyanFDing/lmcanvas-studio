@@ -1,22 +1,12 @@
 import { ChevronDown, Frame, MessageSquare, Eye } from 'lucide-react'
+import { useCanvasStore } from '../store/canvasStore'
 
-type Row = {
-  id: string
-  label: string
-  kind: 'frame' | 'msg'
-  depth: number
-  selected?: boolean
-}
-
-const rows: Row[] = [
-  { id: 'f', label: 'Conversation', kind: 'frame', depth: 0 },
-  { id: '1', label: 'user · What is physical AI?', kind: 'msg', depth: 1 },
-  { id: '2', label: 'assistant · AI that perceives…', kind: 'msg', depth: 1, selected: true },
-  { id: '3', label: 'branch · give an example', kind: 'msg', depth: 1 }
-]
-
-// Floating left panel: page selector + the layer tree.
+// Floating left panel: page selector + a live layer tree of the canvas nodes.
 export default function LayersPanel(): JSX.Element {
+  const nodes = useCanvasStore((s) => s.nodes)
+  const selectedId = useCanvasStore((s) => s.selectedId)
+  const setSelected = useCanvasStore((s) => s.setSelected)
+
   return (
     <aside className="panel panel-left">
       <div className="panel-page">
@@ -25,21 +15,26 @@ export default function LayersPanel(): JSX.Element {
       </div>
       <div className="panel-divider" />
       <div className="layer-list">
-        {rows.map((r) => (
-          <div
-            key={r.id}
-            className={`layer-row ${r.selected ? 'is-selected' : ''}`}
-            style={{ paddingLeft: 10 + r.depth * 16 }}
-          >
-            {r.kind === 'frame' ? (
-              <Frame size={13} className="layer-ico" />
-            ) : (
+        <div className="layer-row" style={{ paddingLeft: 10 }}>
+          <Frame size={13} className="layer-ico" />
+          <span className="layer-label">Conversation</span>
+          <Eye size={12} className="layer-eye" />
+        </div>
+        {nodes.map((n) => {
+          const label = `${n.data.role} · ${n.data.content || '…'}`
+          return (
+            <div
+              key={n.id}
+              className={`layer-row ${selectedId === n.id ? 'is-selected' : ''}`}
+              style={{ paddingLeft: 26 }}
+              onClick={() => setSelected(n.id)}
+            >
               <MessageSquare size={13} className="layer-ico" />
-            )}
-            <span className="layer-label">{r.label}</span>
-            <Eye size={12} className="layer-eye" />
-          </div>
-        ))}
+              <span className="layer-label">{label}</span>
+              <Eye size={12} className="layer-eye" />
+            </div>
+          )
+        })}
       </div>
     </aside>
   )

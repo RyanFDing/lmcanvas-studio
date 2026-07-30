@@ -1,68 +1,72 @@
-import { useCallback } from 'react'
+import { useEffect } from 'react'
 import {
   ReactFlow,
+  ReactFlowProvider,
+  useReactFlow,
   Background,
   BackgroundVariant,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  type Connection,
-  type Edge,
-  type NodeTypes
+  type NodeTypes,
+  type OnSelectionChangeParams
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import MessageNode, { type MessageNodeType } from './MessageNode'
+import MessageNode from './MessageNode'
+import { useCanvasStore } from '../store/canvasStore'
 
 const nodeTypes: NodeTypes = { message: MessageNode }
 
-// Seed content so the canvas isn't empty. Real conversations arrive at M2.
-const initialNodes: MessageNodeType[] = [
-  {
-    id: '1',
-    type: 'message',
-    position: { x: 0, y: 0 },
-    data: { role: 'user', content: 'What is physical AI, in one line?' }
-  },
-  {
-    id: '2',
-    type: 'message',
-    position: { x: 60, y: 240 },
-    data: {
-      role: 'assistant',
-      content: 'AI that perceives and acts in the physical world through robots and sensors.'
-    }
-  }
-]
+function Flow(): JSX.Element {
+  const { fitView } = useReactFlow()
+  const nodes = useCanvasStore((s) => s.nodes)
+  const edges = useCanvasStore((s) => s.edges)
+  const onNodesChange = useCanvasStore((s) => s.onNodesChange)
+  const onEdgesChange = useCanvasStore((s) => s.onEdgesChange)
+  const onConnect = useCanvasStore((s) => s.onConnect)
+  const setSelected = useCanvasStore((s) => s.setSelected)
+  const streamingId = useCanvasStore((s) => s.streamingId)
+  const hydrate = useCanvasStore((s) => s.hydrate)
 
-const initialEdges: Edge[] = [{ id: 'e1-2', source: '1', target: '2' }]
+  // Load any saved canvas from disk on first mount (M3 persistence).
+  useEffect(() => {
+    void hydrate()
+  }, [hydrate])
 
-export default function Canvas(): JSX.Element {
-  const [nodes, , onNodesChange] = useNodesState<MessageNodeType>(initialNodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges)
-
-  const onConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
-    [setEdges]
-  )
+  // Follow each new reply so branches never stream off-screen.
+  // Deferred so xyflow has registered + measured the freshly-added node.
+  useEffect(() => {
+    if (!streamingId) return
+    const t = setTimeout(() => {
+      void fitView({ nodes: [{ id: streamingId }], duration: 600, padding: 0.75, maxZoom: 1 })
+    }, 120)
+    return () => clearTimeout(t)
+  }, [streamingId, fitView])
 
   return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      nodeTypes={nodeTypes}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      onSelectionChange={(p: OnSelectionChangeParams) => setSelected(p.nodes[0]?.id ?? null)}
+      fitView
+      fitViewOptions={{ padding: 0.3, maxZoom: 1 }}
+      minZoom={0.2}
+      maxZoom={2}
+      panOnScroll
+      selectionOnDrag
+    >
+      <Background variant={BackgroundVariant.Dots} gap={24} size={1.4} color="#333333" />
+    </ReactFlow>
+  )
+}
+
+export default function Canvas(): JSX.Element {
+  return (
     <div className="canvas-root">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        fitView
-        fitViewOptions={{ padding: 0.3, maxZoom: 1 }}
-        minZoom={0.2}
-        maxZoom={2}
-        panOnScroll
-        selectionOnDrag
-      >
-        <Background variant={BackgroundVariant.Dots} gap={24} size={1.4} color="#333333" />
-      </ReactFlow>
+      <ReactFlowProvider>
+        <Flow />
+      </ReactFlowProvider>
     </div>
   )
 }

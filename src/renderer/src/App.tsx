@@ -3,6 +3,7 @@ import TopBar from './ui/TopBar'
 import LayersPanel from './ui/LayersPanel'
 import Inspector from './ui/Inspector'
 import Toolbar from './ui/Toolbar'
+import Composer from './ui/Composer'
 
 function App(): JSX.Element {
   return (
@@ -12,6 +13,7 @@ function App(): JSX.Element {
         <Canvas />
         <LayersPanel />
         <Inspector />
+        <Composer />
         <Toolbar />
       </div>
     </div>

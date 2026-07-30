@@ -462,6 +462,12 @@ button {
   border-color: var(--accent);
   box-shadow: 0 0 0 1.5px var(--accent), 0 4px 14px rgba(0, 0, 0, 0.4);
 }
+.msg-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
 .msg-role {
   display: inline-flex;
   align-items: center;
@@ -470,7 +476,93 @@ button {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-3);
-  margin-bottom: 7px;
+}
+.msg-branch {
+  opacity: 0;
+  color: var(--text-3);
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+}
+.msg-node:hover .msg-branch {
+  opacity: 1;
+}
+.msg-branch:hover {
+  background: var(--panel-hi);
+  color: var(--accent);
+}
+.caret {
+  display: inline-block;
+  width: 7px;
+  height: 14px;
+  margin-left: 2px;
+  background: var(--accent);
+  vertical-align: text-bottom;
+  animation: blink 1s steps(2) infinite;
+}
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---- Composer ---- */
+.composer {
+  position: absolute;
+  bottom: 78px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: min(560px, 66%);
+  padding: 8px 8px 8px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+  z-index: 14;
+}
+.composer-input {
+  flex: 1 1 auto;
+  resize: none;
+  max-height: 120px;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 6px 0;
+}
+.composer-input::placeholder {
+  color: var(--text-3);
+}
+.composer-send {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+.composer-send:hover:not(:disabled) {
+  background: #0b87e0;
+}
+.composer-send:disabled {
+  background: var(--panel-hi);
+  color: var(--text-3);
+  cursor: default;
 }
 .msg-role::before {
   content: '';

@@ -1,5 +1,14 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { join } from 'path'
+import { runClaude } from './ai'
+import { saveCanvas, loadCanvas } from './storage'
+
+// ---- IPC: AI streaming + canvas persistence ----
+ipcMain.on('ai:start', (event, payload: { requestId: string; prompt: string }) => {
+  runClaude(event.sender, payload.requestId, payload.prompt)
+})
+ipcMain.handle('storage:save', (_e, p: { id: string; data: unknown }) => saveCanvas(p.id, p.data))
+ipcMain.handle('storage:load', (_e, p: { id: string }) => loadCanvas(p.id))
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({

@@ -1,4 +1,6 @@
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react'
+import { GitBranch } from 'lucide-react'
+import { useCanvasStore } from '../store/canvasStore'
 
 export type MessageData = {
   role: 'user' | 'assistant'
@@ -8,13 +10,30 @@ export type MessageData = {
 export type MessageNodeType = Node<MessageData, 'message'>
 
 // A single conversation message rendered as a draggable card on the canvas.
-// Top handle = where a reply connects in; bottom handle = where branches leave.
-export default function MessageNode({ data, selected }: NodeProps<MessageNodeType>): JSX.Element {
+export default function MessageNode({ id, data, selected }: NodeProps<MessageNodeType>): JSX.Element {
+  const setSelected = useCanvasStore((s) => s.setSelected)
+  const branchFromSelection = useCanvasStore((s) => s.branchFromSelection)
+  const isStreaming = useCanvasStore((s) => s.streamingId === id)
+
+  // Selecting text inside a node seeds a branch from that quote.
+  const onMouseUp = (): void => {
+    const sel = window.getSelection()?.toString() ?? ''
+    if (sel.trim().length > 1) branchFromSelection(id, sel)
+  }
+
   return (
     <div className={`msg-node msg-${data.role} ${selected ? 'is-selected' : ''}`}>
       <Handle type="target" position={Position.Top} />
-      <div className="msg-role">{data.role}</div>
-      <div className="msg-content">{data.content}</div>
+      <div className="msg-head">
+        <span className="msg-role">{data.role}</span>
+        <button className="msg-branch" title="Branch from here" onClick={() => setSelected(id)}>
+          <GitBranch size={12} />
+        </button>
+      </div>
+      <div className="msg-content" onMouseUp={onMouseUp}>
+        {data.content}
+        {isStreaming && <span className="caret" />}
+      </div>
       <Handle type="source" position={Position.Bottom} />
     </div>
   )

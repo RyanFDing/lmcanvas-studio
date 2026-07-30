@@ -135,13 +135,14 @@ Persistence: one JSON file per canvas in `~/.lmcanvas-studio/canvases/`.
 
 ## 7. Milestones (small, checkpointed)
 
-- **M0 — Scaffold**: Electron + Bun + React + TS boots to an empty window. ✅ checkpoint: `bun run dev` opens a window.
-- **M1 — Canvas basics**: xyflow infinite canvas, pan/zoom, a hardcoded node renders. ✅ checkpoint: drag a node around.
-- **M2 — AI wired up**: type a prompt → main process spawns `claude` → streamed reply appears in a node. ✅ checkpoint: real answer on canvas.
-- **M3 — Branching + storage**: branch from node/highlighted text; save/load canvas from disk. ✅ checkpoint: reopen app, canvas persists.
-- **M4 — Figma UX Tier 1**: toolbar, inspector, layers, multi-select, snapping, undo/redo, minimap. ✅ checkpoint: feels like a design tool.
-- **M5 — Figma UX Tier 2**: frames, sticky notes, command palette, theming, export.
-- **M6 — Packaging**: `bun run dist` → installers for Mac/Win/Linux.
+- **M0 — Scaffold**: Electron + Vite + React + TS boots to a window. ✅ DONE
+- **M1 — Canvas basics**: xyflow infinite canvas, pan/zoom, draggable message nodes. ✅ DONE
+- **M2 — AI wired up**: prompt → main spawns `claude` (stream-json) → streamed reply into a node. ✅ DONE — pure `parseLine` parser unit-tested against real CLI output; browser preview uses a mock stream.
+- **M3 — Branching + storage**: branch from node/highlighted text; autosave/load canvas to `~/.lmcanvas-studio/`. ✅ DONE — composer branches from selected node; text-selection seeds a branch; zustand store + debounced persist; auto-follow new replies.
+- **M4 — Figma UX (visual)**: top bar, layers panel, inspector, floating toolbar pill, Figma UI3 dark theme. ✅ DONE — verified region-by-region against Figma.
+- **M4+ — Figma UX Tier 1 (remaining)**: real multi-select transforms, snapping/align guides, undo/redo. ◻ TODO
+- **M5 — Figma UX Tier 2**: frames, sticky notes, command palette (⌘K), theming, export. ◻ TODO
+- **M6 — Packaging**: `npm run dist` → installers for Mac/Win/Linux. ◻ TODO
 
 ---
 
