@@ -8,7 +8,7 @@ import {
   type Connection,
   type Edge
 } from '@xyflow/react'
-import type { MessageNodeType } from '../canvas/MessageNode'
+import type { AppNode, MessageNodeType } from '../canvas/types'
 
 const CANVAS_ID = 'default'
 
@@ -17,7 +17,7 @@ const uid = (): string =>
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2)
 
-const initialNodes: MessageNodeType[] = [
+const initialNodes: AppNode[] = [
   {
     id: 'seed-1',
     type: 'message',
@@ -37,20 +37,33 @@ const initialNodes: MessageNodeType[] = [
 const initialEdges: Edge[] = [{ id: 'e-seed', source: 'seed-1', target: 'seed-2' }]
 
 type CanvasState = {
-  nodes: MessageNodeType[]
+  nodes: AppNode[]
   edges: Edge[]
   selectedId: string | null
   streamingId: string | null
   composerSeed: string
+  paletteOpen: boolean
+  focusId: string | null
+  focusNonce: number
+  fitAllNonce: number
 
   onNodesChange: (changes: NodeChange[]) => void
   onEdgesChange: (changes: EdgeChange[]) => void
   onConnect: (c: Connection) => void
   setSelected: (id: string | null) => void
   setComposerSeed: (text: string) => void
+  setPaletteOpen: (open: boolean) => void
 
   sendPrompt: (text: string) => void
   branchFromSelection: (nodeId: string, quote: string) => void
+
+  addSticky: () => void
+  addFrame: () => void
+  updateSticky: (id: string, text: string) => void
+  newThread: () => void
+
+  exportMarkdown: () => void
+  requestFitAll: () => void
 
   persist: () => void
   hydrate: () => Promise<void>
@@ -64,10 +77,22 @@ export const useCanvasStore = create<CanvasState>((set, get) => {
     saveTimer = setTimeout(() => get().persist(), 500)
   }
 
+  const requestFocus = (id: string): void =>
+    set({ focusId: id, focusNonce: get().focusNonce + 1 })
+
+  // Anchor new elements near the selected node, else near the origin.
+  const anchor = (): { x: number; y: number } => {
+    const { selectedId, nodes } = get()
+    const sel = selectedId ? nodes.find((n) => n.id === selectedId) : null
+    return sel ? sel.position : { x: 0, y: 0 }
+  }
+
   const appendTo = (id: string, delta: string): void =>
     set({
       nodes: get().nodes.map((n) =>
-        n.id === id ? { ...n, data: { ...n.data, content: n.data.content + delta } } : n
+        n.id === id && n.type === 'message'
+          ? { ...n, data: { ...n.data, content: n.data.content + delta } }
+          : n
       )
     })
 
@@ -79,7 +104,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => {
     }
 
     if (window.api?.ai) {
-      // Real path: live claude CLI via Electron IPC.
       const offChunk = window.api.ai.onChunk((p) => {
         if (p.requestId === requestId) appendTo(targetId, p.delta)
       })
@@ -100,7 +124,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => {
       })
       window.api.ai.start(requestId, prompt)
     } else {
-      // Browser-preview fallback: mock a streamed reply so the UI is demoable.
       const canned =
         'Physical AI is intelligence embodied in machines that sense and act in the real world — robots, drones, and sensor-driven systems that learn from physical interaction.'
       let i = 0
@@ -121,23 +144,29 @@ export const useCanvasStore = create<CanvasState>((set, get) => {
     selectedId: null,
     streamingId: null,
     composerSeed: '',
+    paletteOpen: false,
+    focusId: null,
+    focusNonce: 0,
+    fitAllNonce: 0,
 
     onNodesChange: (changes) => {
-      set({ nodes: applyNodeChanges(changes, get().nodes) as MessageNodeType[] })
+      set({ nodes: applyNodeChanges(changes, get().nodes) as AppNode[] })
       scheduleSave()
     },
     onEdgesChange: (changes) => set({ edges: applyEdgeChanges(changes, get().edges) }),
     onConnect: (c) => set({ edges: addEdge(c, get().edges) }),
     setSelected: (id) => set({ selectedId: id }),
     setComposerSeed: (text) => set({ composerSeed: text }),
+    setPaletteOpen: (open) => set({ paletteOpen: open }),
 
     sendPrompt: (text) => {
       const trimmed = text.trim()
       if (!trimmed) return
       const { selectedId, nodes, edges } = get()
-      // Branch from the selected node, else from the most recent node.
       const parent =
-        (selectedId && nodes.find((n) => n.id === selectedId)) || nodes[nodes.length - 1] || null
+        (selectedId && nodes.find((n) => n.id === selectedId && n.type === 'message')) ||
+        [...nodes].reverse().find((n) => n.type === 'message') ||
+        null
       const base = parent ? parent.position : { x: 0, y: 0 }
 
       const userId = uid()
@@ -165,13 +194,88 @@ export const useCanvasStore = create<CanvasState>((set, get) => {
         selectedId: asstId,
         composerSeed: ''
       })
+      requestFocus(asstId)
       stream(asstId, trimmed)
     },
 
     branchFromSelection: (nodeId, quote) => {
-      // "Branch from highlighted text": select the source node and pre-fill
-      // the composer with the quote as context for the next prompt.
       set({ selectedId: nodeId, composerSeed: `Regarding "${quote.trim()}": ` })
+    },
+
+    addSticky: () => {
+      const a = anchor()
+      const id = uid()
+      const node: AppNode = {
+        id,
+        type: 'sticky',
+        position: { x: a.x + 340, y: a.y },
+        data: { text: '' }
+      }
+      set({ nodes: [...get().nodes, node], selectedId: id })
+      requestFocus(id)
+      scheduleSave()
+    },
+
+    addFrame: () => {
+      const a = anchor()
+      const id = uid()
+      const node: AppNode = {
+        id,
+        type: 'frame',
+        position: { x: a.x - 60, y: a.y - 80 },
+        width: 520,
+        height: 420,
+        zIndex: -1,
+        data: { title: 'Frame' }
+      }
+      set({ nodes: [...get().nodes, node], selectedId: id })
+      requestFocus(id)
+      scheduleSave()
+    },
+
+    updateSticky: (id, text) => {
+      set({
+        nodes: get().nodes.map((n) =>
+          n.id === id && n.type === 'sticky' ? { ...n, data: { ...n.data, text } } : n
+        )
+      })
+      scheduleSave()
+    },
+
+    newThread: () => set({ selectedId: null, composerSeed: '' }),
+
+    requestFitAll: () => set({ fitAllNonce: get().fitAllNonce + 1 }),
+
+    exportMarkdown: () => {
+      const { nodes, edges } = get()
+      const msgs = nodes.filter((n): n is MessageNodeType => n.type === 'message')
+      const byId = new Map(msgs.map((n) => [n.id, n]))
+      const childrenOf = new Map<string, string[]>()
+      const hasIncoming = new Set<string>()
+      for (const e of edges) {
+        if (byId.has(e.source) && byId.has(e.target)) {
+          childrenOf.set(e.source, [...(childrenOf.get(e.source) ?? []), e.target])
+          hasIncoming.add(e.target)
+        }
+      }
+      const roots = msgs.filter((n) => !hasIncoming.has(n.id))
+      const lines: string[] = ['# lmcanvas-studio conversation', '']
+      const walk = (id: string, depth: number): void => {
+        const n = byId.get(id)
+        if (!n) return
+        const indent = '  '.repeat(depth)
+        lines.push(`${indent}- **${n.data.role}:** ${n.data.content.replace(/\n/g, ' ')}`)
+        for (const c of childrenOf.get(id) ?? []) walk(c, depth + 1)
+      }
+      for (const r of roots) walk(r.id, 0)
+
+      const blob = new Blob([lines.join('\n')], { type: 'text/markdown' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'lmcanvas-conversation.md'
+      a.click()
+      URL.revokeObjectURL(url)
     },
 
     persist: () => {
@@ -181,7 +285,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => {
 
     hydrate: async () => {
       const saved = (await window.api?.storage?.load(CANVAS_ID)) as
-        | { nodes: MessageNodeType[]; edges: Edge[] }
+        | { nodes: AppNode[]; edges: Edge[] }
         | null
         | undefined
       if (saved && Array.isArray(saved.nodes) && saved.nodes.length > 0) {

@@ -4,6 +4,7 @@ import LayersPanel from './ui/LayersPanel'
 import Inspector from './ui/Inspector'
 import Toolbar from './ui/Toolbar'
 import Composer from './ui/Composer'
+import CommandPalette from './ui/CommandPalette'
 
 function App(): JSX.Element {
   return (
@@ -16,6 +17,7 @@ function App(): JSX.Element {
         <Composer />
         <Toolbar />
       </div>
+      <CommandPalette />
     </div>
   )
 }

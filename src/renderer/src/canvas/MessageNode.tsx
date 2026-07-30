@@ -1,13 +1,9 @@
-import { Handle, Position, type Node, type NodeProps } from '@xyflow/react'
+import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { GitBranch } from 'lucide-react'
 import { useCanvasStore } from '../store/canvasStore'
+import type { MessageNodeType } from './types'
 
-export type MessageData = {
-  role: 'user' | 'assistant'
-  content: string
-}
-
-export type MessageNodeType = Node<MessageData, 'message'>
+export type { MessageData, MessageNodeType } from './types'
 
 // A single conversation message rendered as a draggable card on the canvas.
 export default function MessageNode({ id, data, selected }: NodeProps<MessageNodeType>): JSX.Element {

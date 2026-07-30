@@ -1,5 +1,19 @@
-import { ChevronDown, Frame, MessageSquare, Eye } from 'lucide-react'
+import { ChevronDown, Frame, MessageSquare, StickyNote, Eye } from 'lucide-react'
 import { useCanvasStore } from '../store/canvasStore'
+
+function rowMeta(n: { type?: string; data: Record<string, unknown> }): {
+  icon: JSX.Element
+  label: string
+} {
+  if (n.type === 'sticky')
+    return { icon: <StickyNote size={13} className="layer-ico" />, label: `sticky · ${(n.data.text as string) || '…'}` }
+  if (n.type === 'frame')
+    return { icon: <Frame size={13} className="layer-ico" />, label: `${(n.data.title as string) || 'Frame'}` }
+  return {
+    icon: <MessageSquare size={13} className="layer-ico" />,
+    label: `${n.data.role as string} · ${(n.data.content as string) || '…'}`
+  }
+}
 
 // Floating left panel: page selector + a live layer tree of the canvas nodes.
 export default function LayersPanel(): JSX.Element {
@@ -21,7 +35,7 @@ export default function LayersPanel(): JSX.Element {
           <Eye size={12} className="layer-eye" />
         </div>
         {nodes.map((n) => {
-          const label = `${n.data.role} · ${n.data.content || '…'}`
+          const { icon, label } = rowMeta(n)
           return (
             <div
               key={n.id}
@@ -29,7 +43,7 @@ export default function LayersPanel(): JSX.Element {
               style={{ paddingLeft: 26 }}
               onClick={() => setSelected(n.id)}
             >
-              <MessageSquare size={13} className="layer-ico" />
+              {icon}
               <span className="layer-label">{label}</span>
               <Eye size={12} className="layer-eye" />
             </div>

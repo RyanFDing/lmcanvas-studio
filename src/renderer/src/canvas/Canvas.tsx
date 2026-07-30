@@ -10,9 +10,11 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import MessageNode from './MessageNode'
+import StickyNode from './StickyNode'
+import FrameNode from './FrameNode'
 import { useCanvasStore } from '../store/canvasStore'
 
-const nodeTypes: NodeTypes = { message: MessageNode }
+const nodeTypes: NodeTypes = { message: MessageNode, sticky: StickyNode, frame: FrameNode }
 
 function Flow(): JSX.Element {
   const { fitView } = useReactFlow()
@@ -22,7 +24,9 @@ function Flow(): JSX.Element {
   const onEdgesChange = useCanvasStore((s) => s.onEdgesChange)
   const onConnect = useCanvasStore((s) => s.onConnect)
   const setSelected = useCanvasStore((s) => s.setSelected)
-  const streamingId = useCanvasStore((s) => s.streamingId)
+  const focusId = useCanvasStore((s) => s.focusId)
+  const focusNonce = useCanvasStore((s) => s.focusNonce)
+  const fitAllNonce = useCanvasStore((s) => s.fitAllNonce)
   const hydrate = useCanvasStore((s) => s.hydrate)
 
   // Load any saved canvas from disk on first mount (M3 persistence).
@@ -30,15 +34,23 @@ function Flow(): JSX.Element {
     void hydrate()
   }, [hydrate])
 
-  // Follow each new reply so branches never stream off-screen.
+  // Follow a newly-added / streaming node so it never lands off-screen.
   // Deferred so xyflow has registered + measured the freshly-added node.
   useEffect(() => {
-    if (!streamingId) return
+    if (!focusId) return
     const t = setTimeout(() => {
-      void fitView({ nodes: [{ id: streamingId }], duration: 600, padding: 0.75, maxZoom: 1 })
+      void fitView({ nodes: [{ id: focusId }], duration: 600, padding: 0.75, maxZoom: 1 })
     }, 120)
     return () => clearTimeout(t)
-  }, [streamingId, fitView])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusNonce])
+
+  // "Fit to screen" command → frame everything.
+  useEffect(() => {
+    if (fitAllNonce === 0) return
+    void fitView({ duration: 600, padding: 0.2 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitAllNonce])
 
   return (
     <ReactFlow
