@@ -1,13 +1,19 @@
 import Canvas from './canvas/Canvas'
+import TopBar from './ui/TopBar'
+import LayersPanel from './ui/LayersPanel'
+import Inspector from './ui/Inspector'
+import Toolbar from './ui/Toolbar'
 
 function App(): JSX.Element {
   return (
     <div className="app">
-      <div className="topbar">
-        <span className="wordmark">lmcanvas-studio</span>
-        <span className="stage-badge">M1 · canvas</span>
+      <TopBar />
+      <div className="workspace">
+        <Canvas />
+        <LayersPanel />
+        <Inspector />
+        <Toolbar />
       </div>
-      <Canvas />
     </div>
   )
 }

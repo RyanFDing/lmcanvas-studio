@@ -3,8 +3,6 @@ import {
   ReactFlow,
   Background,
   BackgroundVariant,
-  Controls,
-  MiniMap,
   useNodesState,
   useEdgesState,
   addEdge,
@@ -57,14 +55,13 @@ export default function Canvas(): JSX.Element {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         fitView
+        fitViewOptions={{ padding: 0.3, maxZoom: 1 }}
         minZoom={0.2}
         maxZoom={2}
-        selectionOnDrag
         panOnScroll
+        selectionOnDrag
       >
-        <Background variant={BackgroundVariant.Dots} gap={22} size={1} color="#2a2f3a" />
-        <MiniMap pannable zoomable className="lm-minimap" />
-        <Controls />
+        <Background variant={BackgroundVariant.Dots} gap={24} size={1.4} color="#333333" />
       </ReactFlow>
     </div>
   )
