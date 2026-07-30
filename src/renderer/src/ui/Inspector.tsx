@@ -8,14 +8,15 @@ import {
   AlignCenterHorizontal,
   AlignEndHorizontal
 } from 'lucide-react'
+import { useCanvasStore, type AlignMode } from '../store/canvasStore'
 
-const alignIcons = [
-  AlignStartVertical,
-  AlignCenterVertical,
-  AlignEndVertical,
-  AlignStartHorizontal,
-  AlignCenterHorizontal,
-  AlignEndHorizontal
+const alignButtons: { Icon: typeof AlignStartVertical; mode: AlignMode }[] = [
+  { Icon: AlignStartVertical, mode: 'left' },
+  { Icon: AlignCenterVertical, mode: 'hcenter' },
+  { Icon: AlignEndVertical, mode: 'right' },
+  { Icon: AlignStartHorizontal, mode: 'top' },
+  { Icon: AlignCenterHorizontal, mode: 'vmiddle' },
+  { Icon: AlignEndHorizontal, mode: 'bottom' }
 ]
 
 // A small inline glyph for corner-radius (an L with a rounded corner).
@@ -29,6 +30,7 @@ function RadiusGlyph(): JSX.Element {
 
 // Floating right panel: the Design/Inspector, Figma-style property sections.
 export default function Inspector(): JSX.Element {
+  const alignSelected = useCanvasStore((s) => s.alignSelected)
   return (
     <aside className="panel panel-right">
       <div className="insp-tabs">
@@ -37,10 +39,16 @@ export default function Inspector(): JSX.Element {
       </div>
       <div className="panel-divider" />
 
-      {/* Alignment row */}
+      {/* Alignment row — acts on the current multi-selection */}
       <div className="insp-align">
-        {alignIcons.map((Icon, i) => (
-          <button key={i} className="align-btn" aria-label={`align-${i}`}>
+        {alignButtons.map(({ Icon, mode }) => (
+          <button
+            key={mode}
+            className="align-btn"
+            aria-label={`align-${mode}`}
+            title={`Align ${mode}`}
+            onClick={() => alignSelected(mode)}
+          >
             <Icon size={15} />
           </button>
         ))}

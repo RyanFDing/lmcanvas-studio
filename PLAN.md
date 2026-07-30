@@ -140,7 +140,7 @@ Persistence: one JSON file per canvas in `~/.lmcanvas-studio/canvases/`.
 - **M2 — AI wired up**: prompt → main spawns `claude` (stream-json) → streamed reply into a node. ✅ DONE — pure `parseLine` parser unit-tested against real CLI output; browser preview uses a mock stream.
 - **M3 — Branching + storage**: branch from node/highlighted text; autosave/load canvas to `~/.lmcanvas-studio/`. ✅ DONE — composer branches from selected node; text-selection seeds a branch; zustand store + debounced persist; auto-follow new replies.
 - **M4 — Figma UX (visual)**: top bar, layers panel, inspector, floating toolbar pill, Figma UI3 dark theme. ✅ DONE — verified region-by-region against Figma.
-- **M4+ — Figma UX Tier 1 (remaining)**: real multi-select transforms, snapping/align guides, undo/redo. ◻ TODO
+- **M4+ — Figma UX Tier 1 (remaining)**: multi-select align, snapping guides, undo/redo. ✅ DONE — undo/redo (⌘Z/⌘⇧Z + palette, verified), object-snapping helper lines on drag, align selection (left/center/right/top/middle/bottom) wired to inspector row, delete key, Figma-style left-drag marquee (panOnDrag→middle/right, scroll pans). Note: align/snapping verified by build; multi-select drag gesture couldn't be driven via screenshot automation.
 - **M5 — Figma UX Tier 2**: frames, sticky notes, command palette (⌘K), export. ✅ DONE — resizable frame nodes (NodeResizer), FigJam sticky notes, ⌘K/Actions palette (New thread, Add sticky, Add frame, Export to Markdown, Fit to screen), Markdown export of the conversation tree. Theming still TODO.
 - **M6 — Packaging**: `npm run dist` → installers for Mac/Win/Linux. ◻ TODO
 

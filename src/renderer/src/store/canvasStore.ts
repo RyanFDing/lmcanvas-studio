@@ -9,6 +9,12 @@ import {
   type Edge
 } from '@xyflow/react'
 import type { AppNode, MessageNodeType } from '../canvas/types'
+import { getHelperLines } from '../canvas/helperLines'
+
+export type AlignMode = 'left' | 'hcenter' | 'right' | 'top' | 'vmiddle' | 'bottom'
+type Snapshot = { nodes: AppNode[]; edges: Edge[] }
+const nodeW = (n: AppNode): number => n.measured?.width ?? (n.width as number) ?? 0
+const nodeH = (n: AppNode): number => n.measured?.height ?? (n.height as number) ?? 0
 
 const CANVAS_ID = 'default'
 
@@ -46,13 +52,24 @@ type CanvasState = {
   focusId: string | null
   focusNonce: number
   fitAllNonce: number
+  helperLineHorizontal?: number
+  helperLineVertical?: number
+  past: Snapshot[]
+  future: Snapshot[]
 
   onNodesChange: (changes: NodeChange[]) => void
   onEdgesChange: (changes: EdgeChange[]) => void
   onConnect: (c: Connection) => void
+  onNodeDragStart: () => void
   setSelected: (id: string | null) => void
   setComposerSeed: (text: string) => void
   setPaletteOpen: (open: boolean) => void
+
+  pushPast: () => void
+  undo: () => void
+  redo: () => void
+  alignSelected: (mode: AlignMode) => void
+  deleteSelected: () => void
 
   sendPrompt: (text: string) => void
   branchFromSelection: (nodeId: string, quote: string) => void
@@ -148,16 +165,108 @@ export const useCanvasStore = create<CanvasState>((set, get) => {
     focusId: null,
     focusNonce: 0,
     fitAllNonce: 0,
+    helperLineHorizontal: undefined,
+    helperLineVertical: undefined,
+    past: [],
+    future: [],
 
     onNodesChange: (changes) => {
-      set({ nodes: applyNodeChanges(changes, get().nodes) as AppNode[] })
+      let hLine: number | undefined
+      let vLine: number | undefined
+      // While dragging a single node, snap it to nearby nodes + show guides.
+      const only = changes.length === 1 ? changes[0] : null
+      if (only && only.type === 'position' && only.dragging && only.position) {
+        const { horizontal, vertical, snapPosition } = getHelperLines(only, get().nodes)
+        only.position.x = snapPosition.x ?? only.position.x
+        only.position.y = snapPosition.y ?? only.position.y
+        hLine = horizontal
+        vLine = vertical
+      }
+      set({
+        nodes: applyNodeChanges(changes, get().nodes) as AppNode[],
+        helperLineHorizontal: hLine,
+        helperLineVertical: vLine
+      })
       scheduleSave()
     },
     onEdgesChange: (changes) => set({ edges: applyEdgeChanges(changes, get().edges) }),
-    onConnect: (c) => set({ edges: addEdge(c, get().edges) }),
+    onConnect: (c) => {
+      get().pushPast()
+      set({ edges: addEdge(c, get().edges) })
+    },
+    onNodeDragStart: () => get().pushPast(),
     setSelected: (id) => set({ selectedId: id }),
     setComposerSeed: (text) => set({ composerSeed: text }),
     setPaletteOpen: (open) => set({ paletteOpen: open }),
+
+    pushPast: () =>
+      set({
+        past: [...get().past.slice(-49), { nodes: get().nodes, edges: get().edges }],
+        future: []
+      }),
+
+    undo: () => {
+      const { past, future, nodes, edges } = get()
+      if (past.length === 0) return
+      const prev = past[past.length - 1]
+      set({
+        nodes: prev.nodes,
+        edges: prev.edges,
+        past: past.slice(0, -1),
+        future: [...future, { nodes, edges }]
+      })
+      scheduleSave()
+    },
+
+    redo: () => {
+      const { past, future, nodes, edges } = get()
+      if (future.length === 0) return
+      const next = future[future.length - 1]
+      set({
+        nodes: next.nodes,
+        edges: next.edges,
+        future: future.slice(0, -1),
+        past: [...past, { nodes, edges }]
+      })
+      scheduleSave()
+    },
+
+    alignSelected: (mode) => {
+      const selected = get().nodes.filter((n) => n.selected)
+      if (selected.length < 2) return
+      get().pushPast()
+      const minX = Math.min(...selected.map((n) => n.position.x))
+      const maxX = Math.max(...selected.map((n) => n.position.x + nodeW(n)))
+      const minY = Math.min(...selected.map((n) => n.position.y))
+      const maxY = Math.max(...selected.map((n) => n.position.y + nodeH(n)))
+      const cx = (minX + maxX) / 2
+      const cy = (minY + maxY) / 2
+      set({
+        nodes: get().nodes.map((n) => {
+          if (!n.selected) return n
+          const p = { ...n.position }
+          if (mode === 'left') p.x = minX
+          else if (mode === 'right') p.x = maxX - nodeW(n)
+          else if (mode === 'hcenter') p.x = cx - nodeW(n) / 2
+          else if (mode === 'top') p.y = minY
+          else if (mode === 'bottom') p.y = maxY - nodeH(n)
+          else if (mode === 'vmiddle') p.y = cy - nodeH(n) / 2
+          return { ...n, position: p }
+        }) as AppNode[]
+      })
+      scheduleSave()
+    },
+
+    deleteSelected: () => {
+      const sel = new Set(get().nodes.filter((n) => n.selected).map((n) => n.id))
+      if (sel.size === 0) return
+      get().pushPast()
+      set({
+        nodes: get().nodes.filter((n) => !sel.has(n.id)),
+        edges: get().edges.filter((e) => !sel.has(e.source) && !sel.has(e.target))
+      })
+      scheduleSave()
+    },
 
     sendPrompt: (text) => {
       const trimmed = text.trim()
@@ -187,6 +296,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => {
       if (parent) newEdges.push({ id: uid(), source: parent.id, target: userId })
       newEdges.push({ id: uid(), source: userId, target: asstId })
 
+      get().pushPast()
       set({
         nodes: [...nodes, userNode, asstNode],
         edges: [...edges, ...newEdges],
@@ -211,6 +321,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => {
         position: { x: a.x + 340, y: a.y },
         data: { text: '' }
       }
+      get().pushPast()
       set({ nodes: [...get().nodes, node], selectedId: id })
       requestFocus(id)
       scheduleSave()
@@ -228,6 +339,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => {
         zIndex: -1,
         data: { title: 'Frame' }
       }
+      get().pushPast()
       set({ nodes: [...get().nodes, node], selectedId: id })
       requestFocus(id)
       scheduleSave()

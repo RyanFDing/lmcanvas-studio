@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { StickyNote, Frame, Download, Maximize, Plus, CornerDownLeft } from 'lucide-react'
+import { StickyNote, Frame, Download, Maximize, Plus, Undo2, Redo2, CornerDownLeft } from 'lucide-react'
 import { useCanvasStore } from '../store/canvasStore'
 
 type Action = { id: string; label: string; hint?: string; icon: JSX.Element; run: () => void }
@@ -13,6 +13,8 @@ export default function CommandPalette(): JSX.Element | null {
   const exportMarkdown = useCanvasStore((s) => s.exportMarkdown)
   const requestFitAll = useCanvasStore((s) => s.requestFitAll)
   const newThread = useCanvasStore((s) => s.newThread)
+  const undo = useCanvasStore((s) => s.undo)
+  const redo = useCanvasStore((s) => s.redo)
 
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
@@ -29,9 +31,11 @@ export default function CommandPalette(): JSX.Element | null {
         icon: <Download size={15} />,
         run: exportMarkdown
       },
-      { id: 'fit', label: 'Fit to screen', icon: <Maximize size={15} />, run: requestFitAll }
+      { id: 'fit', label: 'Fit to screen', icon: <Maximize size={15} />, run: requestFitAll },
+      { id: 'undo', label: 'Undo', hint: '⌘Z', icon: <Undo2 size={15} />, run: undo },
+      { id: 'redo', label: 'Redo', hint: '⌘⇧Z', icon: <Redo2 size={15} />, run: redo }
     ],
-    [addSticky, addFrame, exportMarkdown, requestFitAll, newThread]
+    [addSticky, addFrame, exportMarkdown, requestFitAll, newThread, undo, redo]
   )
 
   const filtered = useMemo(
