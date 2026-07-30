@@ -8,49 +8,114 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   background: #0f1115;
   color: #e6e8eb;
 }
 
-.app-shell {
+/* ---- App shell ---- */
+.app {
   height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+.topbar {
+  height: 44px;
+  flex: 0 0 auto;
+  display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
-  text-align: center;
-  padding: 24px;
+  padding: 0 16px;
+  border-bottom: 1px solid #20242d;
+  background: #12151b;
+  -webkit-app-region: drag;
 }
 
-.badge {
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #7c8797;
-  border: 1px solid #2a2f3a;
-  border-radius: 999px;
-  padding: 4px 12px;
-}
-
-h1 {
-  font-size: 40px;
+.wordmark {
   font-weight: 700;
+  font-size: 14px;
   background: linear-gradient(90deg, #7aa2f7, #bb9af7);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-.tagline {
-  font-size: 16px;
-  color: #b4bcc8;
-  max-width: 460px;
+.stage-badge {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7c8797;
+  border: 1px solid #2a2f3a;
+  border-radius: 999px;
+  padding: 2px 10px;
 }
 
-.hint {
-  font-size: 13px;
+/* ---- Canvas ---- */
+.canvas-root {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.react-flow {
+  background: #0f1115;
+}
+
+.lm-minimap {
+  background: #12151b !important;
+  border: 1px solid #20242d;
+  border-radius: 8px;
+}
+
+/* ---- Message nodes ---- */
+.msg-node {
+  width: 260px;
+  border-radius: 12px;
+  padding: 12px 14px;
+  border: 1px solid #2a2f3a;
+  background: #171b22;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.msg-node.is-selected {
+  border-color: #7aa2f7;
+  box-shadow: 0 0 0 2px rgba(122, 162, 247, 0.35), 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.msg-user {
+  border-top: 3px solid #7aa2f7;
+}
+
+.msg-assistant {
+  border-top: 3px solid #bb9af7;
+}
+
+.msg-role {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: #7c8797;
-  margin-top: 8px;
+  margin-bottom: 6px;
+}
+
+.msg-content {
+  font-size: 13px;
+  line-height: 1.45;
+  color: #e6e8eb;
+  white-space: pre-wrap;
+}
+
+/* xyflow handles — small, subtle */
+.react-flow__handle {
+  width: 8px;
+  height: 8px;
+  background: #4b5563;
+  border: 1px solid #0f1115;
 }
