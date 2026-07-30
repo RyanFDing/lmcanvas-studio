@@ -142,7 +142,7 @@ Persistence: one JSON file per canvas in `~/.lmcanvas-studio/canvases/`.
 - **M4 — Figma UX (visual)**: top bar, layers panel, inspector, floating toolbar pill, Figma UI3 dark theme. ✅ DONE — verified region-by-region against Figma.
 - **M4+ — Figma UX Tier 1 (remaining)**: multi-select align, snapping guides, undo/redo. ✅ DONE — undo/redo (⌘Z/⌘⇧Z + palette, verified), object-snapping helper lines on drag, align selection (left/center/right/top/middle/bottom) wired to inspector row, delete key, Figma-style left-drag marquee (panOnDrag→middle/right, scroll pans). Note: align/snapping verified by build; multi-select drag gesture couldn't be driven via screenshot automation.
 - **M5 — Figma UX Tier 2**: frames, sticky notes, command palette (⌘K), export. ✅ DONE — resizable frame nodes (NodeResizer), FigJam sticky notes, ⌘K/Actions palette (New thread, Add sticky, Add frame, Export to Markdown, Fit to screen), Markdown export of the conversation tree. Theming still TODO.
-- **M6 — Packaging**: `npm run dist` → installers for Mac/Win/Linux. ◻ TODO
+- **M6 — Packaging**: `npm run dist` → installers for Mac/Win/Linux. ✅ DONE — electron-builder configured (dmg/nsis/AppImage); `npm run pack` (--dir) verified: produces a valid 259 MB `lmcanvas-studio.app` bundle with app.asar. `npm run dist` builds the signed-less installers. Custom app icon still TODO (uses default Electron icon).
 
 ---
 

@@ -1,0 +1,21 @@
+appId: com.lmcanvas.studio
+productName: lmcanvas-studio
+directories:
+  output: release
+  buildResources: build
+# The renderer deps are bundled by Vite and the main process uses only
+# Node/Electron builtins, so only the compiled output needs to ship.
+files:
+  - out/**
+  - package.json
+mac:
+  target:
+    - dmg
+  category: public.app-category.productivity
+win:
+  target:
+    - nsis
+linux:
+  target:
+    - AppImage
+  category: Graphics

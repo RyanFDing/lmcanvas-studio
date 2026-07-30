@@ -3,13 +3,15 @@
   "version": "0.0.1",
   "description": "Local-first, Figma-style infinite canvas for branching AI conversations, powered by the Claude Code CLI.",
   "main": "./out/main/index.js",
-  "author": "",
+  "author": "Ryan Ding",
   "license": "MIT",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "start": "electron-vite preview"
+    "start": "electron-vite preview",
+    "pack": "electron-vite build && electron-builder --dir",
+    "dist": "electron-vite build && electron-builder"
   },
   "dependencies": {
     "@xyflow/react": "^12.11.2",
@@ -24,6 +26,7 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "^32.2.6",
+    "electron-builder": "^26.15.3",
     "electron-vite": "^2.3.0",
     "typescript": "^5.7.2",
     "vite": "^5.4.11"
