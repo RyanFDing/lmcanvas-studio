@@ -8,7 +8,8 @@ export function runClaude(sender: WebContents, requestId: string, prompt: string
   const child = spawn(
     'claude',
     ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--include-partial-messages'],
-    { env: process.env }
+    // stdin must be closed: an open pipe makes the CLI wait ~3s for piped input before replying
+    { env: process.env, stdio: ['ignore', 'pipe', 'pipe'] }
   )
 
   const state = newStreamState()

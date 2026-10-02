@@ -10,6 +10,7 @@ import {
 } from '@xyflow/react'
 import type { AppNode, MessageNodeType } from '../canvas/types'
 import { getHelperLines } from '../canvas/helperLines'
+import { ancestorPath, buildPrompt } from '../canvas/conversation'
 
 export type AlignMode = 'left' | 'hcenter' | 'right' | 'top' | 'vmiddle' | 'bottom'
 type Snapshot = { nodes: AppNode[]; edges: Edge[] }
@@ -305,7 +306,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => {
         composerSeed: ''
       })
       requestFocus(asstId)
-      stream(asstId, trimmed)
+      stream(asstId, buildPrompt(ancestorPath(nodes, edges, parent?.id ?? null), trimmed))
     },
 
     branchFromSelection: (nodeId, quote) => {
